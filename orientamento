@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orientamento IIS Ettore Conti</title>
+    <!-- Tailwind CSS per la grafica mobile -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans p-4">
+
+    <!-- Header con ID Studente -->
+    <header class="bg-blue-900 text-white p-4 rounded-xl shadow-md mb-6">
+        <h1 class="text-xl font-bold">IIS Ettore Conti - Tour Orienta</h1>
+        <div id="user-info" class="text-sm mt-1 text-blue-200">
+            <!-- Popolato via JS -->
+        </div>
+    </header>
+
+    <!-- Schermata 1: Registrazione Iniziale -->
+    <div id="step-register" class="bg-white p-6 rounded-xl shadow-lg">
+        <h2 class="text-lg font-bold mb-4">Benvenuto all'Open Day!</h2>
+        <p class="text-sm text-gray-600 mb-4">Inserisci i tuoi dati per iniziare la caccia all'orientamento tra i nostri laboratori.</p>
+        <input type="text" id="student-name" placeholder="Nome e Cognome" class="w-full p-3 border rounded-lg mb-4 text-base focus:outline-blue-500">
+        <button onclick="registerStudent()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow hover:bg-blue-700">Inizia il Percorso</button>
+    </div>
+
+    <!-- Schermata 2: Domanda del Laboratorio (Attivata da QR Code) -->
+    <div id="step-quiz" class="hidden bg-white p-6 rounded-xl shadow-lg">
+        <span id="lab-tag" class="inline-block bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full text-xs mb-3">LABORATORIO</span>
+        <h2 id="lab-title" class="text-xl font-bold mb-3">...</h2>
+        <p id="quiz-question" class="text-gray-700 text-sm mb-6">...</p>
+        
+        <div id="options-container" class="space-y-3">
+            <!-- Pulsanti con le opzioni caricate dinamicamente -->
+        </div>
+    </div>
+
+    <!-- Schermata 3: Stato Percorso / Nessun QR Scansionato -->
+    <div id="step-status" class="hidden bg-white p-6 rounded-xl shadow-lg text-center">
+        <div class="text-emerald-500 text-5xl mb-3">✓</div>
+        <h2 class="text-lg font-bold mb-2">Risposta Registrata!</h2>
+        <p class="text-sm text-gray-600 mb-4">Mostra la schermata al tutor per ricevere il timbro sul tuo passaporto cartaceo e passa al laboratorio successivo.</p>
+        <div id="progress-bar" class="w-full bg-gray-200 rounded-full h-4 mb-4">
+            <div id="progress-fill" class="bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
+        </div>
+        <p id="progress-text" class="text-xs text-gray-500"></p>
+    </div>
+
+    <script class="script">
+        // Database locale delle domande (Domande RIASEC adatte ai lab del Conti)
+        const quizData = {
+            "meccanica": {
+                title: "Laboratorio di Meccanica",
+                question: "Devi rendere una bicicletta da corsa più performante. Cosa ti stimola di più fare?",
+                options: [
+                    { text: "Calcolare con formule e tabelle i rapporti dei cambi ideali.", type: "A" },
+                    { text: "Riprogettare il telaio rendendolo più aerodinamico e aggressivo.", type: "B" },
+                    { text: "Smontare i componenti fisici, ingrassare e regolare la catena a mano.", type: "C" },
+                    { text: "Analizzare la lega metallica del telaio per verificarne la resistenza.", type: "D" }
+                ]
+            },
+            "cad": {
+                title: "Laboratorio CAD",
+                question: "Ti chiedono di ideare una custodia per smartphone innovativa. Qual è il tuo focus?",
+                options: [
+                    { text: "Analizzare la disposizione ottimale dei componenti interni.", type: "A" },
+                    { text: "Modellare in 3D forme e superfici ergonomiche ed estetiche.", type: "B" },
+                    { text: "Verificare gli incastri e come assemblare i pezzi fisici.", type: "C" },
+                    { text: "Scegliere i materiali siliconici o compositi più adatti.", type: "D" }
+                ]
+            },
+            "informatica": {
+                title: "Laboratorio di Informatica",
+                question: "Se dovessi sviluppare un'app per la scuola, quale ruolo sceglieresti?",
+                options: [
+                    { text: "Programmatore: scrivere il codice e la logica del database.", type: "A" },
+                    { text: "UX/UI Designer: progettare le schermate e l'interfaccia grafica.", type: "B" },
+                    { text: "Hardware/Network Administrator: configurare il server reale e la rete.", type: "C" },
+                    { text: "Data Analyst: studiare le statistiche d'uso degli studenti.", type: "D" }
+                ]
+            }
+            // Aggiungere gli altri laboratori (fisica, chimica, biologia, tpsee, misure elettriche)
+        };
+
+        // Gestione Stato e URL Parameters
+        let studentData = JSON.parse(localStorage.getItem('student_conti')) || null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentLab = urlParams.get('lab');
+
+        function init() {
+            if (!studentData) {
+                showStep('step-register');
+            } else {
+                document.getElementById('user-info').innerText = `Studente: ${studentData.name}`;
+                if (currentLab && quizData[currentLab]) {
+                    loadQuiz(currentLab);
+                } else {
+                    showStatus();
+                }
+            }
+        }
+
+        function registerStudent() {
+            const name = document.getElementById('student-name').value;
+            if (!name) return alert("Inserisci il tuo nome!");
+            
+            studentData = {
+                id: 'STU-' + Math.floor(1000 + Math.random() * 9000),
+                name: name,
+                answers: {},
+                scores: { A: 0, B: 0, C: 0, D: 0 }
+            };
+            localStorage.setItem('student_conti', JSON.stringify(studentData));
+            init();
+        }
+
+        function loadQuiz(labKey) {
+            const quiz = quizData[labKey];
+            document.getElementById('lab-title').innerText = quiz.title;
+            document.getElementById('quiz-question').innerText = quiz.question;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            quiz.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition font-medium text-sm";
+                btn.innerText = opt.text;
+                btn.onclick = () => saveAnswer(labKey, opt.type);
+                container.appendChild(btn);
+            });
+
+            showStep('step-quiz');
+        }
+
+        function saveAnswer(labKey, profileType) {
+            studentData.answers[labKey] = profileType;
+            studentData.scores[profileType] = (studentData.scores[profileType] || 0) + 1;
+            
+            localStorage.setItem('student_conti', JSON.stringify(studentData));
+            
+            // OPZIONALE: Qui si inviano i dati ad una piattaforma DB (es. Firebase o Supabase)
+            // sendToDatabase(studentData);
+
+            showStatus();
+        }
+
+        function showStatus() {
+            showStep('step-status');
+            const totalLabs = Object.keys(quizData).length;
+            const answered = Object.keys(studentData.answers).length;
+            const perc = Math.round((answered / totalLabs) * 100);
+            
+            document.getElementById('progress-fill').style.width = perc + '%';
+            document.getElementById('progress-text').innerText = `${answered} di ${totalLabs} laboratori completati`;
+        }
+
+        function showStep(stepId) {
+            ['step-register', 'step-quiz', 'step-status'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(stepId).classList.remove('hidden');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
