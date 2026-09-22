@@ -1,255 +1,205 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orientamento IIS Ettore Conti</title>
-    <!-- Tailwind CSS per la grafica mobile -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-100 text-slate-800 font-sans p-4 min-h-screen flex flex-col justify-between">
+<!-- Aggiungi questo script nell'head di index.html -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <div>
-        <!-- Header con dati dello Studente -->
-        <header class="bg-blue-900 text-white p-4 rounded-xl shadow-md mb-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold">IIS Ettore Conti</h1>
-                <p class="text-xs text-blue-200">Tour Orienta Laboratori</p>
-            </div>
-            <div id="user-info" class="text-right text-xs bg-blue-800 p-2 rounded-lg">
-                <!-- Popolato via JS -->
-            </div>
-        </header>
+<script>
+    // 1. INSERISCI QUI LE TUE CHIAVI SUPABASE
+    const SUPABASE_URL = "INSERISCI_TUA_URL_SUPABASE";
+    const SUPABASE_KEY = "INSERISCI_TUA_KEY_ANON_SUPABASE";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        <!-- Schermata 1: Registrazione Iniziale -->
-        <div id="step-register" class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-lg font-bold mb-2 text-blue-900">Benvenuto all'Open Day!</h2>
-            <p class="text-sm text-gray-600 mb-4">Inserisci il tuo nome per iniziare il percorso attraverso i laboratori dell'istituto.</p>
-            <input type="text" id="student-name" placeholder="Nome e Cognome" class="w-full p-3 border border-slate-300 rounded-lg mb-4 text-base focus:outline-blue-600">
-            <button onclick="registerStudent()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 transition">Inizia il Tour</button>
-        </div>
+    // Database completo delle domande per tutti gli 8 laboratori
+    const quizData = {
+        "meccanica": {
+            title: "Laboratorio di Meccanica",
+            question: "Devi riparare o migliorare una bicicletta da corsa per renderla più veloce. Cosa fai per prima cosa?",
+            options: [
+                { text: "Studio le marce e calcolo il rapporto ideale con una formula o tabella.", type: "A" },
+                { text: "Riprogetto il telaio rendendolo più aerodinamico e bello da vedere.", type: "B" },
+                { text: "Smonto il cambio, ingrasso gli ingranaggi e tocco con mano cosa fa attrito.", type: "C" },
+                { text: "Analizzo il materiale del telaio per capire quali leghe leggere resistono di più.", type: "D" }
+            ]
+        },
+        "misure": {
+            title: "Misure Elettriche ed Elettroniche",
+            question: "Un dispositivo elettrico smette improvvisamente di funzionare. Come intervieni?",
+            options: [
+                { text: "Ricerco il codice di errore o analizzo il flusso dei segnali logici.", type: "A" },
+                { text: "Penso a come disporre meglio i componenti per renderlo più sicuro e compatto.", type: "B" },
+                { text: "Prendo il tester per misurare la tensione e individuare subito il filo staccato.", type: "C" },
+                { text: "Misuro come varia la resistenza al variare della temperatura del circuito.", type: "D" }
+            ]
+        },
+        "fisica": {
+            title: "Laboratorio di Fisica",
+            question: "Vedi una montagna russa. Quale dettaglio cattura subito la tua attenzione?",
+            options: [
+                { text: "La traiettoria e le formule di gravità e accelerazione del giro della morte.", type: "A" },
+                { text: "L'estetica, il design e la struttura delle curve e dei sostegni.", type: "B" },
+                { text: "Il meccanismo di frenata magnetica o le catene che tirano su i carrelli.", type: "C" },
+                { text: "Il modo in cui l'energia potenziale si trasforma in energia cinetica.", type: "D" }
+            ]
+        },
+        "tpsee": {
+            title: "Laboratorio TPSEE",
+            question: "Immagina di dover realizzare uno 'Smart Home System' (casa intelligente). Di cosa vorresti occuparti?",
+            options: [
+                { text: "Scrivere le righe di codice che gestiscono l'automazione della centralina.", type: "A" },
+                { text: "Progettare la mappa digitale dell'impianto e l'interfaccia di controllo utente.", type: "B" },
+                { text: "Collegare i sensori, i relè e i cavi sulla scheda elettronica reale.", type: "C" },
+                { text: "Testare il consumo energetico complessivo dell'impianto per ridurre gli sprechi.", type: "D" }
+            ]
+        },
+        "cad": {
+            title: "Laboratorio CAD",
+            question: "Ti chiedono di ideare un nuovo modello di smartwatch. Su cosa ti concentri?",
+            options: [
+                { text: "Sulle prestazioni del processore interno e sulla velocità dei calcoli.", type: "A" },
+                { text: "Sulla modellazione 3D della cassa per renderlo moderno ed ergonomico.", type: "B" },
+                { text: "Su come assemblare i pezzi meccanici interni nel minor spazio possibile.", type: "C" },
+                { text: "Sulla scelta di materiali innovativi, resistenti all'acqua e ipoallergenici.", type: "D" }
+            ]
+        },
+        "informatica": {
+            title: "Laboratorio di Informatica",
+            question: "Vuoi creare un nuovo videogioco. Quale ruolo preferiresti avere nel team?",
+            options: [
+                { text: "Programmatore: scrivere la logica dei comportamenti e la gestione dati.", type: "A" },
+                { text: "Designer 3D/UI: curare le ambientazioni, l'interfaccia e la grafica.", type: "B" },
+                { text: "Hardware Specialist: assemblare e ottimizzare il PC da gaming per farlo girare al massimo.", type: "C" },
+                { text: "Game Analyst: analizzare le statistiche dei giocatori per bilanciare il gioco.", type: "D" }
+            ]
+        },
+        "biologia": {
+            title: "Laboratorio di Biologia",
+            question: "Osservando una pianta che cresce al buio, cosa ti incuriosisce di più?",
+            options: [
+                { text: "Creare un modello matematico che preveda la velocità di crescita in base alla luce.", type: "A" },
+                { text: "Progettare una serra verticale che ottimizzi lo spazio e la luce artificiale.", type: "B" },
+                { text: "Costruire un sistema meccanico di irrigazione automatica a goccia.", type: "C" },
+                { text: "Analizzare al microscopio cosa succede alle cellule senza la fotosintesi.", type: "D" }
+            ]
+        },
+        "chimica": {
+            title: "Laboratorio di Chimica",
+            question: "Durante un esperimento vedi una soluzione che cambia colore e produce gas. Cosa pensi?",
+            options: [
+                { text: "Voglio calcolare le proporzioni esatte delle sostanze e la velocità di reazione.", type: "A" },
+                { text: "Immagino come usare questa reazione per produrre un nuovo materiale utile.", type: "B" },
+                { text: "Voglio toccare con mano le provette, preparare i dosaggi e usare le attrezzature.", type: "C" },
+                { text: "Voglio capire la composizione molecolare dei reagenti e il perché del fenomeno.", type: "D" }
+            ]
+        }
+    };
 
-        <!-- Schermata 2: Domanda del Laboratorio (Attivata da QR Code) -->
-        <div id="step-quiz" class="hidden bg-white p-6 rounded-xl shadow-lg">
-            <span id="lab-tag" class="inline-block bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full text-xs mb-3 uppercase tracking-wide">LABORATORIO</span>
-            <h2 id="lab-title" class="text-xl font-bold mb-3 text-slate-900">...</h2>
-            <p id="quiz-question" class="text-gray-700 text-sm mb-6 leading-relaxed">...</p>
-            
-            <div id="options-container" class="space-y-3">
-                <!-- Opzioni caricate dinamicamente -->
-            </div>
-        </div>
+    let studentData = JSON.parse(localStorage.getItem('student_conti')) || null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentLab = urlParams.get('lab');
 
-        <!-- Schermata 3: Stato Percorso / Risposta Salvata -->
-        <div id="step-status" class="hidden bg-white p-6 rounded-xl shadow-lg text-center">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">✓</div>
-            <h2 class="text-lg font-bold mb-2 text-slate-900">Risposta Registrata!</h2>
-            <p class="text-sm text-gray-600 mb-6">Mostra questa schermata per ricevere il timbro sul tuo passaporto cartaceo, poi prosegui verso il prossimo laboratorio.</p>
-            
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
-                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2">
-                    <span>Avanzamento Tour</span>
-                    <span id="progress-text">0 / 8</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div id="progress-fill" class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <p id="completed-notice" class="hidden text-xs text-emerald-600 font-bold bg-emerald-50 p-3 rounded-lg">
-                Hai completato tutti i laboratori! Recati nell'aula finale di Orientamento.
-            </p>
-        </div>
-    </div>
-
-    <!-- Footer con codice ID univoco -->
-    <footer class="text-center text-xs text-gray-400 mt-6">
-        IIS Ettore Conti - Milano • Sistema di Orientamento Attitudinale
-    </footer>
-
-    <script class="script">
-        // Database completo delle domande per tutti gli 8 laboratori
-        const quizData = {
-            "meccanica": {
-                title: "Laboratorio di Meccanica",
-                question: "Devi riparare o migliorare una bicicletta da corsa per renderla più veloce. Cosa fai per prima cosa?",
-                options: [
-                    { text: "Studio le marce e calcolo il rapporto ideale con una formula o tabella.", type: "A" },
-                    { text: "Riprogetto il telaio rendendolo più aerodinamico e bello da vedere.", type: "B" },
-                    { text: "Smonto il cambio, ingrasso gli ingranaggi e tocco con mano cosa fa attrito.", type: "C" },
-                    { text: "Analizzo il materiale del telaio per capire quali leghe leggere resistono di più.", type: "D" }
-                ]
-            },
-            "misure": {
-                title: "Misure Elettriche ed Elettroniche",
-                question: "Un dispositivo elettrico smette improvvisamente di funzionare. Come intervieni?",
-                options: [
-                    { text: "Ricerco il codice di errore o analizzo il flusso dei segnali logici.", type: "A" },
-                    { text: "Penso a come disporre meglio i componenti per renderlo più sicuro e compatto.", type: "B" },
-                    { text: "Prendo il tester per misurare la tensione e individuare subito il filo staccato.", type: "C" },
-                    { text: "Misuro come varia la resistenza al variare della temperatura del circuito.", type: "D" }
-                ]
-            },
-            "fisica": {
-                title: "Laboratorio di Fisica",
-                question: "Vedi una montagna russa. Quale dettaglio cattura subito la tua attenzione?",
-                options: [
-                    { text: "La traiettoria e le formule di gravità e accelerazione del giro della morte.", type: "A" },
-                    { text: "L'estetica, il design e la struttura delle curve e dei sostegni.", type: "B" },
-                    { text: "Il meccanismo di frenata magnetica o le catene che tirano su i carrelli.", type: "C" },
-                    { text: "Il modo in cui l'energia potenziale si trasforma in energia cinetica.", type: "D" }
-                ]
-            },
-            "tpsee": {
-                title: "Laboratorio TPSEE",
-                question: "Immagina di dover realizzare uno 'Smart Home System' (casa intelligente). Di cosa vorresti occuparti?",
-                options: [
-                    { text: "Scrivere le righe di codice che gestiscono l'automazione della centralina.", type: "A" },
-                    { text: "Progettare la mappa digitale dell'impianto e l'interfaccia di controllo utente.", type: "B" },
-                    { text: "Collegare i sensori, i relè e i cavi sulla scheda elettronica reale.", type: "C" },
-                    { text: "Testare il consumo energetico complessivo dell'impianto per ridurre gli sprechi.", type: "D" }
-                ]
-            },
-            "cad": {
-                title: "Laboratorio CAD",
-                question: "Ti chiedono di ideare un nuovo modello di smartwatch. Su cosa ti concentri?",
-                options: [
-                    { text: "Sulle prestazioni del processore interno e sulla velocità dei calcoli.", type: "A" },
-                    { text: "Sulla modellazione 3D della cassa per renderlo moderno ed ergonomico.", type: "B" },
-                    { text: "Su come assemblare i pezzi meccanici interni nel minor spazio possibile.", type: "C" },
-                    { text: "Sulla scelta di materiali innovativi, resistenti all'acqua e ipoallergenici.", type: "D" }
-                ]
-            },
-            "informatica": {
-                title: "Laboratorio di Informatica",
-                question: "Vuoi creare un nuovo videogioco. Quale ruolo preferiresti avere nel team?",
-                options: [
-                    { text: "Programmatore: scrivere la logica dei comportamenti e la gestione dati.", type: "A" },
-                    { text: "Designer 3D/UI: curare le ambientazioni, l'interfaccia e la grafica.", type: "B" },
-                    { text: "Hardware Specialist: assemblare e ottimizzare il PC da gaming per farlo girare al massimo.", type: "C" },
-                    { text: "Game Analyst: analizzare le statistiche dei giocatori per bilanciare il gioco.", type: "D" }
-                ]
-            },
-            "biologia": {
-                title: "Laboratorio di Biologia",
-                question: "Osservando una pianta che cresce al buio, cosa ti incuriosisce di più?",
-                options: [
-                    { text: "Creare un modello matematico che preveda la velocità di crescita in base alla luce.", type: "A" },
-                    { text: "Progettare una serra verticale che ottimizzi lo spazio e la luce artificiale.", type: "B" },
-                    { text: "Costruire un sistema meccanico di irrigazione automatica a goccia.", type: "C" },
-                    { text: "Analizzare al microscopio cosa succede alle cellule senza la fotosintesi.", type: "D" }
-                ]
-            },
-            "chimica": {
-                title: "Laboratorio di Chimica",
-                question: "Durante un esperimento vedi una soluzione che cambia colore e produce gas. Cosa pensi?",
-                options: [
-                    { text: "Voglio calcolare le proporzioni esatte delle sostanze e la velocità di reazione.", type: "A" },
-                    { text: "Immagino come usare questa reazione per produrre un nuovo materiale utile.", type: "B" },
-                    { text: "Voglio toccare con mano le provette, preparare i dosaggi e usare le attrezzature.", type: "C" },
-                    { text: "Voglio capire la composizione molecolare dei reagenti e il perché del fenomeno.", type: "D" }
-                ]
+    function init() {
+        if (!studentData) {
+            showStep('step-register');
+        } else {
+            document.getElementById('user-info').innerHTML = `<b>${studentData.name}</b><br><span class="font-mono text-[10px] text-blue-300">ID: ${studentData.id}</span>`;
+            if (currentLab && quizData[currentLab]) {
+                loadQuiz(currentLab);
+            } else {
+                showStatus();
             }
+        }
+    }
+
+    async function registerStudent() {
+        const name = document.getElementById('student-name').value.trim();
+        if (!name) return alert("Per favore, inserisci il tuo nome e cognome.");
+        
+        studentData = {
+            id: 'CONTI-' + Math.floor(1000 + Math.random() * 9000),
+            name: name,
+            answers: {},
+            scores: { A: 0, B: 0, C: 0, D: 0 }
         };
 
-        // Gestione Stato e URL Parameters
-        let studentData = JSON.parse(localStorage.getItem('student_conti')) || null;
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentLab = urlParams.get('lab');
+        localStorage.setItem('student_conti', JSON.stringify(studentData));
 
-        function init() {
-            if (!studentData) {
-                showStep('step-register');
+        // Salva su Supabase
+        await supabase.from('studenti').insert([{
+            student_id: studentData.id,
+            name: studentData.name,
+            answers: studentData.answers,
+            scores: studentData.scores
+        }]);
+
+        init();
+    }
+
+    function loadQuiz(labKey) {
+        const quiz = quizData[labKey];
+        document.getElementById('lab-title').innerText = quiz.title;
+        document.getElementById('quiz-question').innerText = quiz.question;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        const currentAnswer = studentData.answers[labKey];
+
+        quiz.options.forEach(opt => {
+            const btn = document.createElement('button');
+            let baseStyle = "w-full text-left p-4 border-2 rounded-xl transition font-medium text-sm leading-snug ";
+            
+            if (currentAnswer === opt.type) {
+                baseStyle += "border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-sm";
             } else {
-                document.getElementById('user-info').innerHTML = `<b>${studentData.name}</b><br><span class="font-mono text-[10px] text-blue-300">ID: ${studentData.id}</span>`;
-                if (currentLab && quizData[currentLab]) {
-                    loadQuiz(currentLab);
-                } else {
-                    showStatus();
-                }
-            }
-        }
-
-        function registerStudent() {
-            const name = document.getElementById('student-name').value.trim();
-            if (!name) return alert("Per favore, inserisci il tuo nome e cognome.");
-            
-            studentData = {
-                id: 'CONTI-' + Math.floor(1000 + Math.random() * 9000),
-                name: name,
-                answers: {},
-                scores: { A: 0, B: 0, C: 0, D: 0 }
-            };
-            localStorage.setItem('student_conti', JSON.stringify(studentData));
-            init();
-        }
-
-        function loadQuiz(labKey) {
-            const quiz = quizData[labKey];
-            document.getElementById('lab-title').innerText = quiz.title;
-            document.getElementById('quiz-question').innerText = quiz.question;
-            
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-
-            // Controlla se ha già risposto a questo laboratorio
-            const currentAnswer = studentData.answers[labKey];
-
-            quiz.options.forEach(opt => {
-                const btn = document.createElement('button');
-                let baseStyle = "w-full text-left p-4 border-2 rounded-xl transition font-medium text-sm leading-snug ";
-                
-                if (currentAnswer === opt.type) {
-                    baseStyle += "border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-sm";
-                } else {
-                    baseStyle += "border-slate-200 hover:border-blue-400 hover:bg-slate-50 text-slate-700";
-                }
-
-                btn.className = baseStyle;
-                btn.innerText = opt.text;
-                btn.onclick = () => saveAnswer(labKey, opt.type);
-                container.appendChild(btn);
-            });
-
-            showStep('step-quiz');
-        }
-
-        function saveAnswer(labKey, profileType) {
-            // Se aveva già risposto a questo lab, sottrai il vecchio punteggio
-            if (studentData.answers[labKey]) {
-                const oldType = studentData.answers[labKey];
-                studentData.scores[oldType] = Math.max(0, studentData.scores[oldType] - 1);
+                baseStyle += "border-slate-200 hover:border-blue-400 hover:bg-slate-50 text-slate-700";
             }
 
-            studentData.answers[labKey] = profileType;
-            studentData.scores[profileType] = (studentData.scores[profileType] || 0) + 1;
-            
-            localStorage.setItem('student_conti', JSON.stringify(studentData));
-            showStatus();
+            btn.className = baseStyle;
+            btn.innerText = opt.text;
+            btn.onclick = () => saveAnswer(labKey, opt.type);
+            container.appendChild(btn);
+        });
+
+        showStep('step-quiz');
+    }
+
+    async function saveAnswer(labKey, profileType) {
+        if (studentData.answers[labKey]) {
+            const oldType = studentData.answers[labKey];
+            studentData.scores[oldType] = Math.max(0, studentData.scores[oldType] - 1);
         }
 
-        function showStatus() {
-            showStep('step-status');
-            const totalLabs = Object.keys(quizData).length;
-            const answered = Object.keys(studentData.answers).length;
-            const perc = Math.round((answered / totalLabs) * 100);
-            
-            document.getElementById('progress-fill').style.width = perc + '%';
-            document.getElementById('progress-text').innerText = `${answered} su ${totalLabs}`;
+        studentData.answers[labKey] = profileType;
+        studentData.scores[profileType] = (studentData.scores[profileType] || 0) + 1;
+        
+        localStorage.setItem('student_conti', JSON.stringify(studentData));
 
-            if (answered >= totalLabs) {
-                document.getElementById('completed-notice').classList.remove('hidden');
-            }
+        // Aggiorna su Supabase
+        await supabase.from('studenti').update({
+            answers: studentData.answers,
+            scores: studentData.scores
+        }).eq('student_id', studentData.id);
+
+        showStatus();
+    }
+
+    function showStatus() {
+        showStep('step-status');
+        const totalLabs = Object.keys(quizData).length;
+        const answered = Object.keys(studentData.answers).length;
+        const perc = Math.round((answered / totalLabs) * 100);
+        
+        document.getElementById('progress-fill').style.width = perc + '%';
+        document.getElementById('progress-text').innerText = `${answered} su ${totalLabs}`;
+
+        if (answered >= totalLabs) {
+            document.getElementById('completed-notice').classList.remove('hidden');
         }
+    }
 
-        function showStep(stepId) {
-            ['step-register', 'step-quiz', 'step-status'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(stepId).classList.remove('hidden');
-        }
+    function showStep(stepId) {
+        ['step-register', 'step-quiz', 'step-status'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+        document.getElementById(stepId).classList.remove('hidden');
+    }
 
-        window.onload = init;
-    </script>
-</body>
-</html>
+    window.onload = init;
+</script>
