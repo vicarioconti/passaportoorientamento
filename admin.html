@@ -6,7 +6,7 @@
     <title>Dashboard Orientamento Realtime - Ettore Conti</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js per Radar Chart -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,7 +20,7 @@
                 <h1 class="text-xl font-bold text-white flex items-center gap-2">
                     📊 Dashboard Orientatore Realtime
                 </h1>
-                <p class="text-xs text-slate-400">Ettore Conti - Milano | A.S. 2026/2027</p>
+                <p class="text-xs text-slate-400">Ettore Conti - Milano | A.S. 2027/2028</p>
             </div>
             <button onclick="fetchStudentsFromSupabase()" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-2 rounded-lg font-bold transition flex items-center gap-1">
                 🔄 Aggiorna Lista
@@ -45,7 +45,6 @@
         <!-- Colonna Destra: Dettaglio & Radar Profilo -->
         <div class="lg:col-span-8 flex flex-col space-y-6">
 
-            <!-- Placeholder se nessuno studente è selezionato -->
             <div id="no-selection" class="bg-slate-800/50 border border-dashed border-slate-700 rounded-2xl p-12 text-center text-slate-500 my-auto">
                 <span class="text-4xl block mb-2">👈</span>
                 Seleziona uno studente dalla lista a sinistra per visualizzare il profilo orientativo e le attitudini.
@@ -54,7 +53,6 @@
             <!-- Dettaglio Studente Selezionato -->
             <div id="detail-panel" class="hidden space-y-6">
 
-                <!-- Header Scheda + Tasto Reset Admin -->
                 <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg">
                     <div>
                         <span id="detail-id" class="text-xs font-mono text-blue-400 bg-blue-950 px-2.5 py-1 rounded-md border border-blue-800/50">ID: ---</span>
@@ -66,14 +64,12 @@
                             <span class="text-xs block text-slate-400 uppercase tracking-wider font-semibold">Indirizzo Consigliato</span>
                             <span id="recommended-path" class="font-bold text-base text-emerald-300">---</span>
                         </div>
-                        <!-- TASTO RESET ADMIN -->
                         <button onclick="resetSelectedStudent()" class="w-full sm:w-auto bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 text-rose-300 hover:text-white px-4 py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
                             🗑️ Elimina & Permetti Reset
                         </button>
                     </div>
                 </div>
 
-                <!-- Grafico Radar & Descrizione Profile -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-col items-center justify-center">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Profilo Attitudinale (Radar)</h3>
@@ -107,16 +103,24 @@
     </div>
 
     <script>
-        // Configurazione Supabase
         const SUPABASE_URL = "https://SEU-PROGETTO.supabase.co";
         const SUPABASE_KEY = "LA-TUA-ANON-KEY";
-        const supabaseAdmin = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let supabaseAdmin = null;
+        try {
+            if (typeof supabase !== 'undefined' && SUPABASE_URL.includes('.supabase.co')) {
+                supabaseAdmin = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch(e) {
+            console.warn("Supabase non disponibile.");
+        }
 
         let allStudents = [];
         let currentSelectedIndex = null;
         let radarChartInstance = null;
 
         async function fetchStudentsFromSupabase() {
+            if (!supabaseAdmin) return;
             try {
                 const { data, error } = await supabaseAdmin
                     .from('studenti')
@@ -142,7 +146,7 @@
             listEl.innerHTML = '';
 
             if (allStudents.length === 0) {
-                listEl.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">Nessuno studente ancora registrato su Supabase.</div>`;
+                listEl.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">Nessuno studente registrato su Supabase.</div>`;
                 return;
             }
 
@@ -191,10 +195,10 @@
         }
 
         function calculateOrientation(scores) {
-            const A = scores.A || 0; // Software / Logistica
-            const B = scores.B || 0; // CAD / Layout
-            const C = scores.C || 0; // Maker / Meccanica
-            const D = scores.D || 0; // Scienze / Misure
+            const A = scores.A || 0;
+            const B = scores.B || 0;
+            const C = scores.C || 0;
+            const D = scores.D || 0;
 
             let path = "";
             let desc = "";
@@ -252,9 +256,8 @@
             });
         }
 
-        // FUNZIONE DI RESET ADMIN
         async function resetSelectedStudent() {
-            if (currentSelectedIndex === null) return;
+            if (currentSelectedIndex === null || !supabaseAdmin) return;
 
             const stu = allStudents[currentSelectedIndex];
             const confirmDelete = confirm(`Sei sicuro di voler eliminare i dati di "${stu.name}" (${stu.student_id})?\n\nLo studente potrà così registrarsi nuovamente dal proprio smartphone.`);
@@ -285,7 +288,7 @@
 
         window.onload = () => {
             fetchStudentsFromSupabase();
-            setInterval(fetchStudentsFromSupabase, 5000); // Auto-refresh ogni 5 secondi
+            setInterval(fetchStudentsFromSupabase, 5000);
         };
     </script>
 </body>
