@@ -174,34 +174,34 @@
             renderChart(scores);
         }
 
-        function calculateOrientation(scores) {
-            const A = scores.A || 0; // Software / Dati / Analitico
-            const B = scores.B || 0; // Progettazione / CAD
-            const C = scores.C || 0; // Maker / Hardware / Laboratori
-            const D = scores.D || 0; // Ricerca / Scienze / Misure
+       function calculateOrientation(scores) {
+    const A = scores.A || 0; // Software / Dati / Logistica Analitica
+    const B = scores.B || 0; // Progettazione / Layout / CAD
+    const C = scores.C || 0; // Maker / Hardware / Meccanica
+    const D = scores.D || 0; // Ricerca / Misure / Scienze
 
-            let path = "";
-            let desc = "";
+    let path = "";
+    let desc = "";
 
-            if ((D + A) >= (C + B) && D >= 2) {
-                path = "Liceo Scientifico Scienze Applicate";
-                desc = "Lo studente dimostra una spiccata propensione per l'indagine scientifica, la sperimentazione e la logica teorica. È il profilo ideale per il Liceo Scienze Applicate.";
-            } else if (C >= A && C >= D) {
-                if (B >= A) {
-                    path = "Tecnico - Meccanica e Meccatronica";
-                    desc = "Orientamento spiccato verso la materia, i meccanismi e la modellazione 3D. Lo studente ama capire come funzionano le macchine e assemblare componenti fisici.";
-                } else {
-                    path = "Tecnico - Elettronica ed Elettrotecnica";
-                    desc = "Forte predisposizione per la parte hardware, i circuiti e i sistemi di automazione. Indicato per chi vuole lavorare a contatto con sensori e schede elettroniche.";
-                }
-            } else {
-                path = "Tecnico - Informatica / TPSEE";
-                desc = "Profilo orientato allo sviluppo del software, alla logica di programmazione e ai sistemi informatici avanzati.";
-            }
-
-            document.getElementById('recommended-path').innerText = path;
-            document.getElementById('path-description').innerText = desc;
+    if ((D + A) >= (C + B) && D >= 2) {
+        path = "Liceo Scientifico Scienze Applicate";
+        desc = "Lo studente dimostra una spiccata propensione per l'indagine scientifica, la sperimentazione e la logica teorica.";
+    } else if (C >= A && C >= D) {
+        if (B >= A) {
+            path = "Tecnico - Meccanica, Meccatronica e Logistica";
+            desc = "Orientamento verso l'organizzazione dei processi produttivi, la movimentazione delle merci e la struttura dei sistemi meccanici.";
+        } else {
+            path = "Tecnico - Elettronica ed Elettrotecnica";
+            desc = "Forte predisposizione per la parte hardware, i circuiti e i sistemi di automazione industriale.";
         }
+    } else {
+        path = "Tecnico - Informatica / TPSEE";
+        desc = "Profilo orientato allo sviluppo del software, alla logica di programmazione e alla gestione dei dati.";
+    }
+
+    document.getElementById('recommended-path').innerText = path;
+    document.getElementById('path-description').innerText = desc;
+}
 
         function renderChart(scores) {
             const ctx = document.getElementById('radarChart').getContext('2d');
