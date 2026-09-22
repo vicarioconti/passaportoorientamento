@@ -32,12 +32,12 @@
     <!-- Main Container -->
     <main class="max-w-md mx-auto w-full p-4 flex-grow">
 
-        <!-- Step 1: Registrazione Studente -->
+        <!-- Step 1: Registrazione Studente (Visibile solo la prima volta) -->
         <div id="step-register" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
             <div class="text-center">
                 <span class="text-3xl">🎒</span>
                 <h2 class="text-xl font-bold text-slate-800 mt-2">Benvenuto all'Open Day!</h2>
-                <p class="text-sm text-slate-500 mt-1">Inserisci il tuo nome e cognome per iniziare il tour dei laboratori e scoprire il tuo profilo.</p>
+                <p class="text-sm text-slate-500 mt-1">Inserisci il tuo nome e cognome per registrare il tuo Passaporto. Potrai farlo una sola volta.</p>
             </div>
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-3 pt-2">
                 <div>
@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        <!-- Step 3: Stato Passaporto / Nessun Quiz Selezionato -->
+        <!-- Step 3: Stato Passaporto (Senza opzione di reset) -->
         <div id="step-status" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-4">
             <div class="text-4xl">📌</div>
             <h2 class="text-lg font-bold text-slate-800">Passaporto Attivo</h2>
@@ -72,10 +72,6 @@
                 <span class="font-bold text-slate-700 block mb-1">Tappe completate:</span>
                 <div id="labs-progress-items" class="text-slate-600">Nessuna tappa ancora registrata.</div>
             </div>
-
-            <button onclick="resetLocalSession()" class="text-xs text-rose-500 underline hover:text-rose-700 block mx-auto pt-2">
-                🔄 Cambia Nome / Fai nuova registrazione
-            </button>
         </div>
 
     </main>
@@ -86,20 +82,19 @@
     </footer>
 
     <script>
-// CONFIGURAZIONE SUPABASE
-const SUPABASE_URL = "https://eydhzzvrofvkvzbmszxz.supabase.co"; 
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5ZGh6enZyb2Z2a3Z6Ym1zenh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNTY3ODgsImV4cCI6MjEwNTYzMjc4OH0.o0mnxSkHyR4FlEKdOb8nyUdN96-6njcW9OIhVs65o2g";
+        // CONFIGURAZIONE SUPABASE
+        const SUPABASE_URL = "https://eydhzzvrofvkvzbmszxz.supabase.co"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5ZGh6enZyb2Z2a3Z6Ym1zenh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNTY3ODgsImV4cCI6MjEwNTYzMjc4OH0.o0mnxSkHyR4FlEKdOb8nyUdN96-6njcW9OIhVs65o2g";
 
-let dbClient = null;
-try {
-    if (typeof supabase !== 'undefined') {
-        dbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-} catch(e) {
-    console.warn("Errore inizializzazione Supabase:", e);
-}
+        let dbClient = null;
+        try {
+            if (typeof supabase !== 'undefined') {
+                dbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch(e) {
+            console.warn("Supabase non disponibile.");
+        }
 
-        // Struttura dati Quiz
         const quizData = {
             "meccanica": {
                 title: "Laboratorio di Meccanica",
@@ -190,35 +185,38 @@ try {
         async function init() {
             if (!studentData) {
                 showStep('step-register');
-            } else {
-                // Controllo se l'admin ha cancellato lo studente da Supabase
-                if (dbClient) {
-                    try {
-                        const { data } = await dbClient
-                            .from('studenti')
-                            .select('student_id')
-                            .eq('student_id', studentData.id)
-                            .maybeSingle();
+                return;
+            }
 
-                        if (!data) {
-                            localStorage.removeItem('student_conti');
-                            studentData = null;
-                            document.getElementById('user-info').innerText = 'Non registrato';
-                            showStep('step-register');
-                            return;
-                        }
-                    } catch(e) {
-                        console.log("Sincronizzazione DB salto per errore di connessione.");
+            // Verifica se l'admin ha cancellato il profilo da Supabase
+            if (dbClient) {
+                try {
+                    const { data } = await dbClient
+                        .from('studenti')
+                        .select('student_id')
+                        .eq('student_id', studentData.id)
+                        .maybeSingle();
+
+                    if (!data) {
+                        // Se l'admin lo ha rimosso, azzera la memoria e riapri la registrazione
+                        localStorage.removeItem('student_conti');
+                        studentData = null;
+                        document.getElementById('user-info').innerText = 'Non registrato';
+                        showStep('step-register');
+                        return;
                     }
+                } catch(e) {
+                    console.log("Sincronizzazione temporaneamente offline.");
                 }
+            }
 
-                document.getElementById('user-info').innerHTML = '<b>' + studentData.name + '</b><br><span style="font-size:10px;">ID: ' + studentData.id + '</span>';
-                
-                if (currentLab && quizData[currentLab]) {
-                    loadQuiz(currentLab);
-                } else {
-                    showStatus();
-                }
+            // Se lo studente esiste, aggiorna l'interfaccia e blocca nuove registrazioni
+            document.getElementById('user-info').innerHTML = '<b>' + studentData.name + '</b><br><span style="font-size:10px;">ID: ' + studentData.id + '</span>';
+            
+            if (currentLab && quizData[currentLab]) {
+                loadQuiz(currentLab);
+            } else {
+                showStatus();
             }
         }
 
@@ -229,7 +227,7 @@ try {
             document.getElementById(stepId).classList.remove('hidden');
         }
 
-        function handleRegister(e) {
+        async function handleRegister(e) {
             e.preventDefault();
             const nameInput = document.getElementById('student-name').value.trim();
             if (!nameInput) return;
@@ -244,8 +242,8 @@ try {
 
             localStorage.setItem('student_conti', JSON.stringify(studentData));
             
-            // Salvataggio asincrono in background per evitare il blocco della pagina
-            saveToSupabase();
+            // Salvataggio immediato nel database
+            await saveToSupabase();
             
             init();
         }
@@ -312,14 +310,7 @@ try {
                         updated_at: new Date().toISOString()
                     });
             } catch (err) {
-                console.warn("Errore salvataggio Supabase (funzionamento in corso offline):", err);
-            }
-        }
-
-        function resetLocalSession() {
-            if (confirm("Vuoi azzerare i dati sul tuo telefono e fare una nuova registrazione?")) {
-                localStorage.removeItem('student_conti');
-                location.href = 'index.html';
+                console.warn("Errore durante il salvataggio remoto:", err);
             }
         }
 
