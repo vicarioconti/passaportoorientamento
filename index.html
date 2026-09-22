@@ -3,169 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passaporto Orientamento - ITT Ettore Conti</title>
+    <title>Passaporto Orientamento - Ettore Conti</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase SDK -->
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans p-4 min-h-screen">
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <div class="max-w-md mx-auto">
-        <!-- Header -->
-        <header class="bg-blue-900 text-white p-4 rounded-xl shadow-md mb-6 flex justify-between items-center">
+    <!-- Header -->
+    <header class="gradient-bg text-white p-4 shadow-md">
+        <div class="max-w-md mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-xl font-bold">ITT Ettore Conti</h1>
-                <p class="text-xs text-blue-200">Passaporto Orientamento</p>
+                <h1 class="font-bold text-lg leading-tight">Ettore Conti - Milano</h1>
+                <p class="text-xs text-blue-200">Passaporto Orientamento A.S. 2027/2028</p>
             </div>
-            <div id="user-info" class="text-right text-xs bg-blue-800 p-2 rounded-lg">
+            <div id="user-info" class="text-right text-xs bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/20">
                 Non registrato
             </div>
-        </header>
-
-        <!-- Avviso di Errore -->
-        <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-xs"></div>
-
-        <!-- Step 1: Registrazione Iniziale -->
-        <div id="step-register" class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-lg font-bold mb-2 text-blue-900">Benvenuto all'Open Day!</h2>
-            <p class="text-sm text-gray-600 mb-4">Inserisci il tuo nome per iniziare il percorso nei laboratori dell'istituto.</p>
-            <input type="text" id="student-name" placeholder="Nome e Cognome" class="w-full p-3 border border-slate-300 rounded-lg mb-4 text-base focus:outline-blue-600">
-            <button onclick="registerStudent()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 transition">Inizia il Tour</button>
         </div>
+    </header>
 
-        <!-- Step 2: Quiz Laboratorio -->
-        <div id="step-quiz" class="hidden bg-white p-6 rounded-xl shadow-lg">
-            <span id="lab-tag" class="inline-block bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full text-xs mb-3 uppercase tracking-wide">LABORATORIO</span>
-            <h2 id="lab-title" class="text-xl font-bold mb-3 text-slate-900">...</h2>
-            <p id="quiz-question" class="text-gray-700 text-sm mb-6 leading-relaxed">...</p>
-            <div id="options-container" class="space-y-3"></div>
-        </div>
+    <!-- Main Container -->
+    <main class="max-w-md mx-auto w-full p-4 flex-grow">
 
-        <!-- Step 3: Stato Percorso -->
-        <div id="step-status" class="hidden bg-white p-6 rounded-xl shadow-lg text-center">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">✓</div>
-            <h2 class="text-lg font-bold mb-2 text-slate-900">Risposta Registrata!</h2>
-            <p class="text-sm text-gray-600 mb-6">Mostra questa schermata per ricevere il timbro sul tuo passaporto cartaceo.</p>
-            
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
-                <div class="flex justify-between text-xs font-bold text-slate-600 mb-2">
-                    <span>Avanzamento Tour</span>
-                    <span id="progress-text">0 / 8</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div id="progress-fill" class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
+        <!-- Step 1: Registrazione Studente -->
+        <div id="step-register" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+            <div class="text-center">
+                <span class="text-3xl">🎒</span>
+                <h2 class="text-xl font-bold text-slate-800 mt-2">Benvenuto all'Open Day!</h2>
+                <p class="text-sm text-slate-500 mt-1">Inserisci il tuo nome e cognome per iniziare il tour dei laboratori e scoprire il tuo profilo.</p>
             </div>
-            
-            <p id="completed-notice" class="hidden text-xs text-emerald-600 font-bold bg-emerald-50 p-3 rounded-lg">
-                Hai completato tutti i laboratori! Recati nell'aula finale di Orientamento.
-            </p>
+            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome e Cognome Studente</label>
+                    <input type="text" id="student-name" required placeholder="Es. Mario Rossi" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-sm transition">
+                    Inizia l'Orientamento 🚀
+                </button>
+            </form>
         </div>
-    </div>
+
+        <!-- Step 2: Modulo Quiz Laboratorio -->
+        <div id="step-quiz" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+            <div>
+                <span id="quiz-badge" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Laboratorio</span>
+                <h2 id="quiz-title" class="text-xl font-bold text-slate-800 mt-2">---</h2>
+            </div>
+            <p id="quiz-question" class="text-sm text-slate-600 font-medium leading-relaxed">---</p>
+            <div id="quiz-options" class="space-y-2.5">
+                <!-- Opzioni inserite dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Step 3: Stato Passaporto / Nessun Quiz Selezionato -->
+        <div id="step-status" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-4">
+            <div class="text-4xl">📌</div>
+            <h2 class="text-lg font-bold text-slate-800">Passaporto Attivo</h2>
+            <p class="text-sm text-slate-500">Inquadra i QR Code posizionati nei banchi dei vari laboratori per rispondere alle domande e sbloccare le tappe!</p>
+            
+            <div id="completed-labs-list" class="text-left text-xs bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                <span class="font-bold text-slate-700 block mb-1">Tappe completate:</span>
+                <div id="labs-progress-items" class="text-slate-600">Nessuna tappa ancora registrata.</div>
+            </div>
+
+            <button onclick="resetLocalSession()" class="text-xs text-rose-500 underline hover:text-rose-700 block mx-auto pt-2">
+                🔄 Cambia Nome / Fai nuova registrazione
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center p-3 text-xs text-slate-400">
+        I.I.S. Ettore Conti - Milano &copy; 2027/2028
+    </footer>
 
     <script>
-        // CREDENZIALI SUPABASE
-        const SUPABASE_URL = "https://eydhzzvrofvkvzbmszxz.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5ZGh6enZyb2Z2a3Z6Ym1zenh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNTY3ODgsImV4cCI6MjEwNTYzMjc4OH0.o0mnxSkHyR4FlEKdOb8nyUdN96-6njcW9OIhVs65o2g";
+        // Configurazione Supabase (Inserisci le tue chiavi se differenti)
+        const SUPABASE_URL = "https://SEU-PROGETTO.supabase.co"; 
+        const SUPABASE_KEY = "LA-TUA-ANON-KEY";
         const dbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        var quizData = {
+        // Struttura dati Quiz (Con Logistica)
+        const quizData = {
             "meccanica": {
                 title: "Laboratorio di Meccanica",
-                question: "Devi riparare o migliorare una bicicletta da corsa per renderla più veloce. Cosa fai per prima cosa?",
+                question: "Se dovessi progettare un nuovo veicolo eco-sostenibile, da dove partiresti?",
                 options: [
-                    { text: "Studio le marce e calcolo il rapporto ideale con una formula o tabella.", type: "A" },
-                    { text: "Riprogetto il telaio rendendolo più aerodinamico e bello da vedere.", type: "B" },
-                    { text: "Smonto il cambio, ingrasso gli ingranaggi e tocco con mano cosa fa attrito.", type: "C" },
-                    { text: "Analizzo il materiale del telaio per capire quali leghe leggere resistono di più.", type: "D" }
+                    { text: "Dalla scelta di materiali leggeri e dalla struttura meccanica del telaio.", type: "C" },
+                    { text: "Dal sistema di gestione elettronica e dai motori elettrici.", type: "B" },
+                    { text: "Dalla simulazione al computer dell'aerodinamica e dei flussi d'aria.", type: "A" },
+                    { text: "Dall'analisi dell'impatto ambientale delle batterie e del riciclo.", type: "D" }
                 ]
             },
             "misure": {
-                title: "Misure Elettriche ed Elettroniche",
-                question: "Un dispositivo elettrico smette improvvisamente di funzionare. Come intervieni?",
+                title: "Laboratorio Misure Elettrotecniche",
+                question: "Un dispositivo elettronico non funziona. Come approcci il problema?",
                 options: [
-                    { text: "Ricerco il codice di errore o analizzo il flusso dei segnali logici.", type: "A" },
-                    { text: "Penso a come disporre meglio i componenti per renderlo più sicuro e compatto.", type: "B" },
-                    { text: "Prendo il tester per misurare la tensione e individuare subito il filo staccato.", type: "C" },
-                    { text: "Misuro come varia la resistenza al variare della temperatura del circuito.", type: "D" }
+                    { text: "Uso uno strumento di misura (tester/oscilloscopio) per analizzare il segnale.", type: "D" },
+                    { text: "Sostituisco i componenti guasti e rifaccio le saldature dei circuiti.", type: "C" },
+                    { text: "Verifico lo schema elettrico e riprogetto i punti di alimentazione.", type: "B" },
+                    { text: "Collego un computer per leggere i codici di errore e il firmware.", type: "A" }
                 ]
             },
             "fisica": {
                 title: "Laboratorio di Fisica",
-                question: "Vedi una montagna russa. Quale dettaglio cattura subito la tua attenzione?",
+                question: "Quale fenomeno o esperimento ti affascina di più?",
                 options: [
-                    { text: "La traiettoria e le formule di gravità e accelerazione del giro della morte.", type: "A" },
-                    { text: "L'estetica, il design e la struttura delle curve e dei sostegni.", type: "B" },
-                    { text: "Il meccanismo di frenata magnetica o le catene che tirano su i carrelli.", type: "C" },
-                    { text: "Il modo in cui l'energia potenziale si trasforma in energia cinetica.", type: "D" }
+                    { text: "Comprendere le leggi fondamentali del cosmo e le particelle atomiche.", type: "D" },
+                    { text: "Creare un'illusione ottica usando lenti e specchi riflettenti.", type: "B" },
+                    { text: "Costruire una catapulta o un sistema di carrucole ad alta efficienza.", type: "C" },
+                    { text: "Analizzare i dati e le traiettorie di un corpo in movimento.", type: "A" }
                 ]
             },
             "tpsee": {
-                title: "Laboratorio TPSEE",
-                question: "Immagina di dover realizzare uno 'Smart Home System' (casa intelligente). Di cosa vorresti occuparti?",
+                title: "Laboratorio TPSEE (Automazione)",
+                question: "Ti chiedono di rendere 'intelligente' una casa (Domotica). Cosa realizzi?",
                 options: [
-                    { text: "Scrivere le righe di codice che gestiscono l'automazione della centralina.", type: "A" },
-                    { text: "Progettare la mappa digitale dell'impianto e l'interfaccia di controllo utente.", type: "B" },
-                    { text: "Collegare i sensori, i relè e i cavi sulla scheda elettronica reale.", type: "C" },
-                    { text: "Testare il consumo energetico complessivo dell'impianto per ridurre gli sprechi.", type: "D" }
+                    { text: "Programmo una centralina che gestisce luci, allarmi e temperatura dal telefono.", type: "A" },
+                    { text: "Progetto il sistema di sensori e attuatori fisici per le porte e le finestre.", type: "B" },
+                    { text: "Monto i relè, i motori delle tapparelle e i collegamenti elettrici.", type: "C" },
+                    { text: "Studio l'efficienza energetica dei consumi della casa tramite bilanci termici.", type: "D" }
                 ]
             },
             "logistica": {
-    title: "Laboratorio di Logistica e Trasporti",
-    question: "Devi organizzare la spedizione urgente di mille pacchi in tutta Italia per un grande e-commerce. Qual è il tuo approccio?",
-    options: [
-        { text: "Uso software di calcolo per pianificare le rotte più brevi e ottimizzare i costi.", type: "A" },
-        { text: "Disegno e organizzo il layout del magazzino per smistare i pacchi velocemente.", type: "B" },
-        { text: "Gestisco il funzionamento dei carrelli e dei nastri trasportatori in magazzino.", type: "C" },
-        { text: "Analizzo i tempi di consegna e i dati dei vettori per migliorare il servizio.", type: "D" }
+                title: "Laboratorio di Logistica e Trasporti",
+                question: "Devi organizzare la spedizione urgente di mille pacchi in tutta Italia per un e-commerce. Qual è il tuo approccio?",
+                options: [
+                    { text: "Uso software di calcolo per pianificare le rotte più brevi e ottimizzare i costi.", type: "A" },
+                    { text: "Disegno e organizzo il layout del magazzino per smistare i pacchi velocemente.", type: "B" },
+                    { text: "Gestisco il funzionamento dei carrelli e dei nastri trasportatori in magazzino.", type: "C" },
+                    { text: "Analizzo i tempi di consegna e i dati dei vettori per migliorare il servizio.", type: "D" }
                 ]
             },
             "informatica": {
                 title: "Laboratorio di Informatica",
-                question: "Vuoi creare un nuovo videogioco. Quale ruolo preferiresti avere nel team?",
+                question: "Quale progetto software ti piacerebbe creare da zero?",
                 options: [
-                    { text: "Programmatore: scrivere la logica dei comportamenti e la gestione dati.", type: "A" },
-                    { text: "Designer 3D/UI: curare le ambientazioni, l'interfaccia e la grafica.", type: "B" },
-                    { text: "Hardware Specialist: assemblare e ottimizzare il PC da gaming per farlo girare al massimo.", type: "C" },
-                    { text: "Game Analyst: analizzare le statistiche dei giocatori per bilanciare il gioco.", type: "D" }
+                    { text: "Un'applicazione web o un videogioco con una logica di codice complessa.", type: "A" },
+                    { text: "Un'interfaccia grafica moderna, intuitiva ed esteticamente accattivante.", type: "B" },
+                    { text: "Un sistema di sicurezza per proteggere la rete domestica da hacker.", type: "C" },
+                    { text: "Un algoritmo di Intelligenza Artificiale capace di analizzare Big Data.", type: "D" }
                 ]
             },
             "biologia": {
                 title: "Laboratorio di Biologia",
-                question: "Osservando una pianta che cresce al buio, cosa ti incuriosisce di più?",
+                question: "In un laboratorio scientifico, quale attività ti interessa di più?",
                 options: [
-                    { text: "Creare un modello matematico che preveda la velocità di crescita in base alla luce.", type: "A" },
-                    { text: "Progettare una serra verticale che ottimizzi lo spazio e la luce artificiale.", type: "B" },
-                    { text: "Costruire un sistema meccanico di irrigazione automatica a goccia.", type: "C" },
-                    { text: "Analizzare al microscopio cosa succede alle cellule senza la fotosintesi.", type: "D" }
+                    { text: "Osservare al microscopio cellule, batteri e strutture DNA.", type: "D" },
+                    { text: "Utilizzare sensori digitali per monitorare la fotosintesi delle piante.", type: "A" },
+                    { text: "Progettare colture idroponiche con sistemi automatizzati di irrigazione.", type: "B" },
+                    { text: "Costruire e assemblare la strumentazione per le provette.", type: "C" }
                 ]
             },
             "chimica": {
                 title: "Laboratorio di Chimica",
-                question: "Durante un esperimento vedi una soluzione che cambia colore e produce gas. Cosa pensi?",
+                question: "Durante un esperimento chimico, cosa stimola la tua curiosità?",
                 options: [
-                    { text: "Voglio calcolare le proporzioni esatte delle sostanze e la velocità di reazione.", type: "A" },
-                    { text: "Immagino come usare questa reazione per produrre un nuovo materiale utile.", type: "B" },
-                    { text: "Voglio toccare con mano le provette, preparare i dosaggi e usare le attrezzature.", type: "C" },
-                    { text: "Voglio capire la composizione molecolare dei reagenti e il perché del fenomeno.", type: "D" }
+                    { text: "Capire le reazioni molecolari che trasformano la materia e i colori.", type: "D" },
+                    { text: "Misurare con precisione Ph, densità e temperatura della soluzione.", type: "A" },
+                    { text: "Utilizzare le reazioni chimiche per generare energia elettrica o calore.", type: "B" },
+                    { text: "Manipolare le provette, i bruciatori e l'attrezzatura di vetro.", type: "C" }
                 ]
             }
         };
 
-        var studentData = null;
-        try {
-            studentData = JSON.parse(localStorage.getItem('student_conti')) || null;
-        } catch(e) { studentData = null; }
+        // Lettura Parametri URL (Es. ?lab=logistica)
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentLab = urlParams.get('lab');
 
-        var urlParams = new URLSearchParams(window.location.search);
-        var currentLab = urlParams.get('lab');
+        let studentData = JSON.parse(localStorage.getItem('student_conti')) || null;
 
-        function init() {
+        async function init() {
             if (!studentData) {
                 showStep('step-register');
             } else {
+                // Controllo Sincronizzato con Supabase: verifica se l'admin ha cancellato lo studente
+                try {
+                    const { data, error } = await dbClient
+                        .from('studenti')
+                        .select('student_id')
+                        .eq('student_id', studentData.id)
+                        .maybeSingle();
+
+                    if (!data) {
+                        // Se cancellato dall'admin, pulisci la sessione locale e fai rieseguire la registrazione
+                        localStorage.removeItem('student_conti');
+                        studentData = null;
+                        document.getElementById('user-info').innerText = 'Non registrato';
+                        showStep('step-register');
+                        return;
+                    }
+                } catch(e) {
+                    console.log("Verifica sessione DB...", e);
+                }
+
                 document.getElementById('user-info').innerHTML = '<b>' + studentData.name + '</b><br><span style="font-size:10px;">ID: ' + studentData.id + '</span>';
+                
                 if (currentLab && quizData[currentLab]) {
                     loadQuiz(currentLab);
                 } else {
@@ -174,98 +215,103 @@
             }
         }
 
-        function registerStudent() {
-            var nameInput = document.getElementById('student-name');
-            var name = nameInput.value ? nameInput.value.trim() : '';
-            if (!name) return alert("Per favore, inserisci il tuo nome e cognome.");
-            
+        function showStep(stepId) {
+            ['step-register', 'step-quiz', 'step-status'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(stepId).classList.remove('hidden');
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('student-name').value.trim();
+            if (!nameInput) return;
+
+            const newId = 'STU-' + Math.floor(1000 + Math.random() * 9000);
             studentData = {
-                id: 'CONTI-' + Math.floor(1000 + Math.random() * 9000),
-                name: name,
+                id: newId,
+                name: nameInput,
                 answers: {},
                 scores: { A: 0, B: 0, C: 0, D: 0 }
             };
+
             localStorage.setItem('student_conti', JSON.stringify(studentData));
-            syncToSupabase();
+            await saveToSupabase();
             init();
         }
 
         function loadQuiz(labKey) {
-            var quiz = quizData[labKey];
-            document.getElementById('lab-title').innerText = quiz.title;
+            const quiz = quizData[labKey];
+            document.getElementById('quiz-title').innerText = quiz.title;
             document.getElementById('quiz-question').innerText = quiz.question;
-            
-            var container = document.getElementById('options-container');
-            container.innerHTML = '';
-            var currentAnswer = studentData.answers[labKey];
 
-            quiz.options.forEach(function(opt) {
-                var btn = document.createElement('button');
-                var baseStyle = "w-full text-left p-4 border-2 rounded-xl transition font-medium text-sm leading-snug ";
-                
-                if (currentAnswer === opt.type) {
-                    baseStyle += "border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-sm";
-                } else {
-                    baseStyle += "border-slate-200 hover:border-blue-400 hover:bg-slate-50 text-slate-700";
-                }
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
 
-                btn.className = baseStyle;
+            quiz.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3.5 border border-slate-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition text-sm font-medium text-slate-700 active:bg-blue-100";
                 btn.innerText = opt.text;
-                btn.onclick = function() { saveAnswer(labKey, opt.type); };
-                container.appendChild(btn);
+                btn.onclick = () => recordAnswer(labKey, opt.type);
+                optionsContainer.appendChild(btn);
             });
 
             showStep('step-quiz');
         }
 
-        function saveAnswer(labKey, profileType) {
-            if (studentData.answers[labKey]) {
-                var oldType = studentData.answers[labKey];
-                studentData.scores[oldType] = Math.max(0, studentData.scores[oldType] - 1);
-            }
-
-            studentData.answers[labKey] = profileType;
-            studentData.scores[profileType] = (studentData.scores[profileType] || 0) + 1;
+        async function recordAnswer(labKey, answerType) {
+            studentData.answers[labKey] = answerType;
             
-            localStorage.setItem('student_conti', JSON.stringify(studentData));
-            syncToSupabase();
-            showStatus();
-        }
+            // Recalculate scores
+            const scores = { A: 0, B: 0, C: 0, D: 0 };
+            Object.values(studentData.answers).forEach(type => {
+                if (scores[type] !== undefined) scores[type]++;
+            });
+            studentData.scores = scores;
 
-        async function syncToSupabase() {
-            if (!studentData) return;
-            try {
-                await dbClient.from('studenti').upsert({
-                    student_id: studentData.id,
-                    name: studentData.name,
-                    answers: studentData.answers,
-                    scores: studentData.scores,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'student_id' });
-            } catch(e) {
-                console.error("Errore sincronizzazione Supabase:", e);
-            }
+            localStorage.setItem('student_conti', JSON.stringify(studentData));
+            await saveToSupabase();
+            
+            showStatus();
         }
 
         function showStatus() {
             showStep('step-status');
-            var totalLabs = Object.keys(quizData).length;
-            var answered = Object.keys(studentData.answers).length;
-            var perc = Math.round((answered / totalLabs) * 100);
+            const progressEl = document.getElementById('labs-progress-items');
+            const completed = Object.keys(studentData.answers || {});
             
-            document.getElementById('progress-fill').style.width = perc + '%';
-            document.getElementById('progress-text').innerText = answered + ' su ' + totalLabs;
-
-            if (answered >= totalLabs) {
-                document.getElementById('completed-notice').classList.remove('hidden');
+            if (completed.length === 0) {
+                progressEl.innerHTML = "<em>Nessuna tappa ancora registrata. Inquadra un QR Code nei banchi!</em>";
+            } else {
+                progressEl.innerHTML = completed.map(lab => {
+                    const labName = quizData[lab] ? quizData[lab].title : lab;
+                    return `✅ <b>${labName}</b>`;
+                }).join('<br>');
             }
         }
 
-        function showStep(stepId) {
-            ['step-register', 'step-quiz', 'step-status'].forEach(function(id) {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(stepId).classList.remove('hidden');
+        async function saveToSupabase() {
+            if (!studentData) return;
+            try {
+                await dbClient
+                    .from('studenti')
+                    .upsert({
+                        student_id: studentData.id,
+                        name: studentData.name,
+                        answers: studentData.answers,
+                        scores: studentData.scores,
+                        updated_at: new Date()
+                    });
+            } catch (err) {
+                console.error("Errore salvataggio Supabase:", err);
+            }
+        }
+
+        function resetLocalSession() {
+            if (confirm("Vuoi azzerare i dati sul tuo telefono e fare una nuova registrazione?")) {
+                localStorage.removeItem('student_conti');
+                location.href = 'index.html';
+            }
         }
 
         window.onload = init;
