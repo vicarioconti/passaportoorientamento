@@ -1,86 +1,157 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard Orientatore - IIS Ettore Conti</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-slate-900 text-white p-8">
-    <h1 class="text-2xl font-bold mb-6 text-blue-400">Postazione Finale Orientamento - IIS Ettore Conti</h1>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Pannello Valutazione -->
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-            <h2 class="text-xl font-bold mb-4">Profilo Attitudinale Studente</h2>
-            <div class="w-full h-64">
-                <canvas id="radarChart"></canvas>
-            </div>
-        </div>
+<!-- Aggiungi questo script nell'head di admin.html -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        <!-- Esito e Consigli per il Docente -->
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-            <div>
-                <h2 class="text-xl font-bold mb-2">Indirizzo Consigliato:</h2>
-                <div id="recommended-path" class="text-3xl font-extrabold text-emerald-400 mb-4">...</div>
-                <p id="path-description" class="text-slate-300 text-sm leading-relaxed mb-4">...</p>
-            </div>
-            
-            <div class="bg-slate-700/50 p-4 rounded-xl text-xs text-slate-400">
-                <b>Nota per il docente:</b> Utilizzare questo risultato insieme alle osservazioni sui timbri raccolti sul passaporto cartaceo per il colloquio di orientamento.
-            </div>
-        </div>
-    </div>
+<script>
+    // 1. INSERISCI QUI LE TUE CHIAVI SUPABASE
+    const SUPABASE_URL = "INSERISCI_TUA_URL_SUPABASE";
+    const SUPABASE_KEY = "INSERISCI_TUA_KEY_ANON_SUPABASE";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <script class="script">
-        // Esempio di elaborazione dati per un profilo (C=3, D=3, B=1, A=1)
-        const mockScores = { A: 1, B: 2, C: 4, D: 1 }; 
+    let chartInstance = null;
+    let allStudents = [];
 
-        function calculateAdvice(scores) {
-            // Algoritmo di ponderazione degli indirizzi Conti
-            const lsaScore = scores.D * 2 + scores.A;
-            const meccScore = scores.C * 2 + scores.B;
-            const elecScore = scores.C * 1.5 + scores.A * 1.5;
-
-            let path = "";
-            let desc = "";
-
-            if (lsaScore >= meccScore && lsaScore >= elecScore) {
-                path = "Liceo Scientifico Scienze Applicate";
-                desc = "Lo studente mostra un'elevata inclinazione per l'indagine scientifica e il ragionamento teorico-analitico. È portato per approfondire matematica, biologia, chimica ed informatica.";
-            } else if (meccScore >= elecScore) {
-                path = "Istituto Tecnico - Meccanica e Meccatronica";
-                desc = "Forte propensione per la modellazione spaziale (CAD), la comprensione di strutture meccaniche e dispositivi fisici. Idealmente orientato alla progettazione e alla fabbricazione.";
-            } else {
-                path = "Istituto Tecnico - Elettronica ed Elettrotecnica";
-                desc = "Attitudine spiccata verso la logica dei sistemi, la sensoristica, l'automazione e il funzionamento dei circuiti elettrici ed elettronici.";
-            }
-
-            document.getElementById('recommended-path').innerText = path;
-            document.getElementById('path-description').innerText = desc;
+    // Carica tutti gli studenti e attiva la sincronizzazione in tempo reale
+    async function loadFromStorage() {
+        // Caricamento iniziale
+        const { data, error } = await supabase.from('studenti').select('*');
+        if (data) {
+            allStudents = data.map(s => ({
+                id: s.student_id,
+                name: s.name,
+                answers: s.answers,
+                scores: s.scores
+            }));
+            renderStudentList(allStudents);
         }
 
-        // Rendering Grafico a Radar (Chart.js)
+        // Ascolto in REALTIME: ogni volta che un ragazzo risponde, la dashboard si aggiorna da sola
+        supabase
+            .channel('db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'studenti' }, async payload => {
+                const { data } = await supabase.from('studenti').select('*');
+                if (data) {
+                    allStudents = data.map(s => ({
+                        id: s.student_id,
+                        name: s.name,
+                        answers: s.answers,
+                        scores: s.scores
+                    }));
+                    renderStudentList(allStudents);
+                }
+            })
+            .subscribe();
+    }
+
+    function renderStudentList(students) {
+        const listEl = document.getElementById('student-list');
+        document.getElementById('student-count').innerText = students.length;
+
+        if (students.length === 0) {
+            listEl.innerHTML = `<p class="text-slate-500 text-sm text-center py-8">In attesa che gli studenti scansionino il primo QR Code...</p>`;
+            return;
+        }
+
+        listEl.innerHTML = '';
+        students.forEach((stu, index) => {
+            const labCount = Object.keys(stu.answers || {}).length;
+            const item = document.createElement('div');
+            item.className = "p-4 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-xl cursor-pointer transition flex justify-between items-center";
+            item.onclick = () => selectStudent(index);
+            item.innerHTML = `
+                <div>
+                    <div class="font-bold text-white text-sm">${stu.name}</div>
+                    <div class="text-xs text-slate-400 font-mono">${stu.id}</div>
+                </div>
+                <span class="text-xs font-bold px-2 py-1 bg-slate-800 text-blue-400 rounded-md border border-slate-600">${labCount}/8 Lab</span>
+            `;
+            listEl.appendChild(item);
+        });
+    }
+
+    function selectStudent(index) {
+        const stu = allStudents[index];
+        document.getElementById('no-selection').classList.add('hidden');
+        document.getElementById('detail-panel').classList.remove('hidden');
+
+        document.getElementById('detail-name').innerText = stu.name;
+        document.getElementById('detail-id').innerText = `ID: ${stu.id}`;
+        const labCount = Object.keys(stu.answers || {}).length;
+        document.getElementById('detail-progress').innerText = `Laboratori completati: ${labCount}/8`;
+
+        const scores = stu.scores || { A:0, B:0, C:0, D:0 };
+        calculateOrientation(scores);
+        renderChart(scores);
+    }
+
+    function calculateOrientation(scores) {
+        const A = scores.A || 0; // Analitico / Informatica
+        const B = scores.B || 0; // Progettista / CAD
+        const C = scores.C || 0; // Maker / Meccanica / Elettronica
+        const D = scores.D || 0; // Ricerca / Scienze
+
+        let path = "";
+        let desc = "";
+
+        if ((D + A) >= (C + B) && D >= 2) {
+            path = "Liceo Scientifico Scienze Applicate";
+            desc = "Lo studente dimostra una spiccata propensione per l'indagine scientifica, la sperimentazione e la logica teorica. È il profilo ideale per il Liceo Scienze Applicate.";
+        } else if (C >= A && C >= D) {
+            if (B >= A) {
+                path = "Tecnico - Meccanica e Meccatronica";
+                desc = "Orientamento spiccato verso la materia, i meccanismi e la modellazione 3D. Lo studente ama capire come funzionano le macchine e usare software CAD.";
+            } else {
+                path = "Tecnico - Elettronica ed Elettrotecnica";
+                desc = "Forte predisposizione per l'hardware, i circuiti e l'automazione. Indicato per chi vuole lavorare a contatto con sensori, quadri elettrici e schede elettroniche.";
+            }
+        } else {
+            path = "Tecnico - Trasporti e Logistica / TPSEE";
+            desc = "Profilo bilanciato con buone capacità di analisi e organizzazione. Adatto alla gestione dei flussi, alla programmazione di sistemi complessi e alla logistica.";
+        }
+
+        document.getElementById('recommended-path').innerText = path;
+        document.getElementById('path-description').innerText = desc;
+    }
+
+    function renderChart(scores) {
         const ctx = document.getElementById('radarChart').getContext('2d');
-        new Chart(ctx, {
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: ['Software/Dati (A)', 'Progettazione/CAD (B)', 'Maker/Hardware (C)', 'Ricerca/Scienza (D)'],
+                labels: ['Software/Dati (A)', 'Progettazione/CAD (B)', 'Maker/Hardware (C)', 'Ricerca/Scienze (D)'],
                 datasets: [{
-                    label: 'Punteggio Attitudinale',
-                    data: [mockScores.A, mockScores.B, mockScores.C, mockScores.D],
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    label: 'Punteggio Attitudine',
+                    data: [scores.A || 0, scores.B || 0, scores.C || 0, scores.D || 0],
+                    backgroundColor: 'rgba(59, 130, 246, 0.25)',
                     borderColor: 'rgba(59, 130, 246, 1)',
-                    pointBackgroundColor: 'rgba(59, 130, 246, 1)'
+                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
                 }]
             },
             options: {
-                scales: { r: { suggestMin: 0, suggestMax: 8, ticks: { display: false } } },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(255,255,255,0.1)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        pointLabels: { color: '#94a3b8', font: { size: 11 } },
+                        ticks: { display: false },
+                        suggestedMin: 0,
+                        suggestedMax: 5
+                    }
+                },
                 plugins: { legend: { display: false } }
             }
         });
+    }
 
-        calculateAdvice(mockScores);
-    </script>
-</body>
-</html>
+    function filterStudents() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const filtered = allStudents.filter(s => s.name.toLowerCase().includes(query) || s.id.toLowerCase().includes(query));
+        renderStudentList(filtered);
+    }
+
+    window.onload = loadFromStorage;
+</script>
